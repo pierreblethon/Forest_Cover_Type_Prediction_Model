@@ -9,7 +9,7 @@
   ### About The Project
 
 * This project presents an attempt to predict the kind of tree cover from four wilderness areas located in the Roosevelt National Forest of northern Colorado.
-* This project started with the motivation to create my own machine learning pipeline and discover what kaggle competitions consisted of.
+* This project started with the motivation to create my own machine learning pipeline and get a sense of what kaggle competitions consist of.
 * The dataset consists of two files:
    * A labeled training set with 15 120 records
    * An unlabeled test set with 565 892 records
