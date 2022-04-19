@@ -26,7 +26,8 @@
 <br/>
   
    <h2 align="center">Unformal Report About The Process</h3>
-   
+
+To see all the figures illustrating the following process, please open the Jupyter file "Predictive_Model.ipynb"
 ### Dataset Exploratory Analysis
 The training set consists of raw unscaled data. Out of the 56 columns, one of them is an index (Id), ten of them are continuous variables and the rest consists of binary variables which have been one hot encoded. Checking the metadata, all features are integers counting no null values. Some binary variables only have one unique value (Soil_Type7 and Soil_Type15), meaning they are either constant to 0 or 1 and will therefore not help predicting the cover type. The training set is also perfectly balanced with one seventh of the total records corresponding to each cover type label. <br/><br/>
 Most of the continuous features do not follow a normal distribution. Some of them are highly skewed such as Horizontal_Distance_To_Hydrology or Vertical_Distance_To_Hydrology and will require some scaling. Some features also seem highly correlated such as Slope and Aspect with the different Hillshades.<br/>
@@ -56,7 +57,7 @@ In other words, 0 is telling that the surface is sun-faced, and 255 that the sur
 
 <p align="center">
   <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png">
-    <img src="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png" width="200">
+    <img src="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png" width="250">
   </a>
 <p align = "center">
 Hillshade index topological representation
@@ -87,4 +88,65 @@ The first step is to convert the hillshade index into a homemade index consideri
 Trees with a value higher than 1 are the ones receiving more sun than the average of all trees, and trees with a value lower than 1 are those that are receiving less.<br/> <br/> 
 With this new coefficient, we can now delete the five features gathering the same information: Slope, Aspect, Hillshade_9am, Hillshade_Noon and Hillshade_3pm. To summarize, the training set now has all the one-hot encoded features (Soil_Types and Wilderness_Areas) and five continuous variables: Elevation, Distance_To_Roadways, Distance_To_Fire_Points, plus the two new created (Hypotenuse_Distance_To_Hydrology and Sun_Illumination).<br/> <br/> 
 Before the feature engineering process, seven correlations were higher than 0.6 (in absolute value). Now, all of them are below this threshold. We can assume that the feature engineering process was a success in terms of removing informative redundancy within the features.<br/> <br/> 
-Once the new features were added and the outliers removed, it was now time to select which features to use for the training of our model. Two methods were combined in order to decide on the number of features to keep. The first one consists of using the feature importance ranking of a decision tree classifier, and the second one using SelectKBest() from scikit-learn. Regarding the feature importance from the classifier, the top variables cumulating 99% of importance were kept. This means 25 features were retained from the tree classifier. These retained features were then compared to the ones selected by SelectKBest() with 25 as an input for the number of top features to select. Comparing the two methods, out of 25 features retained, 21 were matching for both the tree classifier and SelectKBest(). These 21 features are the ones that will be kept for the training of the algorithm.
+Once the new features were added and the outliers removed, it was now time to select which features to use for the training of our model. Two methods were combined in order to decide on the number of features to keep. The first one consists of using the feature importance ranking of a decision tree classifier, and the second one using SelectKBest() from scikit-learn. Regarding the feature importance from the classifier, the top variables cumulating 99% of importance were kept. This means 25 features were retained from the tree classifier. These retained features were then compared to the ones selected by SelectKBest() with 25 as an input for the number of top features to select. Comparing the two methods, out of 25 features retained, 21 were matching for both the tree classifier and SelectKBest(). These 21 features are the ones that will be kept for the training of the algorithm. <br/> <br/> 
+Finally, regarding scaling, four methods were tested on a baseline logistic regression model: StandardScaler(), Normalizer(), RobustScaler() and MinMaxScaler(). Apart from the Normalizer(), all other methods showed good potential with accuracies above 71%. In the following part about modelling, these three top performing scaling methods will be applied to each algorithm. PCA was also applied after standardizing the data, but it did not seem to increase the baseline model’s performance. Our guess is that since the correlation between the features is weak, PCA can hardly find good linear combination of the predictors to build its principal components.
+
+### Modeling 
+Once the training set is scaled, cleaned, that the new features are added and the most relevant ones selected, it is now time to select which type of model would be the best in predicting Cover_Type. To select the models with highest potential, eight classification algorithms were compared:
+   * DecisionTreeClassifier 
+   * RandomForestClassifier 
+   * SVM 
+   * KNeighborsClassifier 
+   * GaussianNB 
+   * LinearDiscriminantAnalysis 
+   * XGBClassifier 
+   * LogisticRegression with Lasso
+   
+No hyperparameter tuning was done at this stage. Each algorithm was used with their default parameters and for each type of scaling. The scoring metric used to compare the models is the accuracy:
+   
+<p align="center">
+<a href="https://user-images.githubusercontent.com/98318608/163978809-81d14189-a430-4cd2-888a-6f27e6a7e1b9.png">
+<img src="https://user-images.githubusercontent.com/98318608/163978809-81d14189-a430-4cd2-888a-6f27e6a7e1b9.png" width="1000">
+</a>
+<p align = "center">
+Accuracy of each algorithm depending on the scaling method used
+</p>
+<br />
+
+As expected, tree-based models are not affected by scaling. The models with highest potential seem to be Random Forest or Ensemble (~ 85% accuracy), XGBoost (~ 82% accuracy) and KNN (~ 78% accuracy). Since XGBoost and Random Forest are both tree-based algorithms, only Random Forest was kept for the hyperparameter tuning process as XGBoost tends to overfit with default hyperparameters. The goal was also to compare the performance of a tree-based algorithm next to a distance-based algorithm like KNN. These two algorithms (Random Forest and KNN) will be kept and hyperparameter tuned using GridSearchCV.<br/>  <br/> 
+After tuning, here are the accuracies of the two models (note that no scaling techniques were applied to the tree-based algorithm as it does not affect its performance and requires less processing time):
+  
+<p align="center">
+<a href="https://user-images.githubusercontent.com/98318608/163979250-8fda246d-3821-4d43-a413-e38f7f0cac88.png">
+<img src="https://user-images.githubusercontent.com/98318608/163979250-8fda246d-3821-4d43-a413-e38f7f0cac88.png" width="1000">
+</a>
+<p align = "center">
+Accuracy of the most promising algorithms depending on the scaling method used
+</p>
+<br />
+  
+With the proper hyperparameters, Random Forest is still the model with the highest accuracy (above 84%). The 1% decrease in accuracy compared to the untuned model can be explained by the regularization that was done, by limiting for example the trees’ maximum depth or maximum number of features for the sake of reducing the model’s variance.<br /><br />
+In views of the results, the final model that will be used for our prediction is Random Forest with the following hyperparameters:
+* Max_depth: 50
+* Max_features: 0.6
+* Min_sample_split: 2
+* Min_sample_leaf: 1
+  
+### Final Model 
+After splitting the training set into a sub-train set and test set, the final Random Forest model was trained and evaluated. Below are the confusion matrixes (in number of counts and percentage) after predicting Cover_Type on the sub-test set:
+  
+<p align="center">
+<a href="https://user-images.githubusercontent.com/98318608/163984026-abbf2fd6-5abf-4604-b7d8-9ba1d0a5399d.png">
+<img src="https://user-images.githubusercontent.com/98318608/163984026-abbf2fd6-5abf-4604-b7d8-9ba1d0a5399d.png" width="1000">
+</a>
+<p align = "center">
+Confusion Matrix of the final Random Forest Model
+</p>
+<br />
+  
+It seems like Cover_Type 1,2 and 3 are the ones the model struggles the most with. The final accuracy of the model is 85.3%, recall is 85.0% and precision 84.7% which are overall good scores. The majority of records appear to be Cover_Type 1 and 2, the ones we know our model struggles the most with. Taking this into account, this might decrease the overall performance metrics of the model on the unlabeled test set. Therefore, we should expect to get lower values than the ones stated above regarding accuracy, recall and precision. However, by cross validating our model, limiting as much as possible overfitting and all the work that has been done throughout this machine learning pipeline, we should still expect good results.
+
+### References
+* Ref. 1: https://pro.arcgis.com/en/pro-app/2.7/help/analysis/raster-functions/hillshade-function.html
+* Ref. 2: https://www.geo.uzh.ch/microsite/geo372/PDF/week4_geo372_terrain.pdf
+* Ref. 3: https://sciendo.com/pdf/10.2478/jlecol-2019-0011
