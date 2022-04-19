@@ -56,22 +56,35 @@ In other words, 0 is telling that the surface is sun-faced, and 255 that the sur
 
 <p align="center">
   <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png">
-    <img src="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png" width="300">
+    <img src="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png" width="200">
   </a>
+<p align = "center">
+Hillshade index topological representation
+</p>
 <br />
   
-However, there are two other features that together describe that same sun-facing property: Slope and Aspect. In a 3D structure such as a real forest, slope can be seen as the gradient of change between the points that define two different lines. The following image show the slope of a 3D object:
-  
-  <p align="center">
-  <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png">
-    <img src="https://desktop.arcgis.com/en/arcmap/latest/manage-data/raster-and-images/GUID-0A189843-6ADF-4FBF-A3A4-A51F515B404A-web.png" width="300">
-  </a>
-<br />
- 
-In this example, A, B, Q and P define a plane, and the change between PQ and AB define the slope of the plane.<br/> 
-The aspect is the direction of the plane with respect to some arbitrary zero, and in this case, since the aspect is defined in azimuth degrees, in respect to the north.<br/> <br/> 
-To summarize, with the slope (Slope) and the direction of the slope relative to the north (Aspect), by combining them together, we can create a new feature that gathers the same information as the hillshade index. This situation shows that, in the training set, five features are gathering similar information (Slope, Aspect, Hillshade_9am, Hillshade_Noon and Hillshade_3pm). Therefore, we have different options: use the hillshade index by combining the three given in the training set, or use a combination of Slope and Aspect. Incoming radiation for a given point at a given time is either a function of the slope and aspect of that point, or the hillshade index. However, it is not a combination of the two indexes together (Ref. 2)<br/> <br/> 
+However, there are two other features that together describe that same sun-facing property: Slope and Aspect. In a 3D structure such as a real forest, slope can be seen as the gradient of change between the points that define two different lines. The aspect is the direction of the plane with respect to some arbitrary zero, and in this case, since the aspect is defined in azimuth degrees, in respect to the north.<br/> <br/> 
+To summarize, with the slope and the direction of the slope relative to the north (Aspect), we can create a new feature that gathers the same information as the hillshade index. This situation shows that, in the training set, five features are gathering similar information (Slope, Aspect, Hillshade_9am, Hillshade_Noon and Hillshade_3pm). Therefore, we have different options: use the hillshade index by combining the three given in the training set, or use a combination of Slope and Aspect. Incoming radiation for a given point at a given time is either a function of the slope and aspect of that point, or the hillshade index. However, it is not a combination of the two indexes together (Ref. 2)<br/> <br/> 
 One could now ask: why is all this information important for our model? The answer is: because, as we can guess for the forest studied, south facing slopes are sunnier and this higher incoming radiation is strongly correlated with the type of tree growing in each area.<br/> 
 After reading several papers and according to some studies, it appears to be better to use hillshade to describe sun exposition rather than a combination of slope and aspect (Ref. 3).<br/> 
 With all that information in mind, the only point to clarify now is how to connect the three hill-shades together, knowing it is the measure of the same terrain from three different points of view. In this case, we believe that to improve the model’s prediction, converting the hillshade index into an illumination coefficient (a new Sun_Illumination feature) would be a good idea. This coefficient would take into account the sun incidence of each tree, and then compare all the trees of the forest in between them.<br/> <br/> 
-The first step is to convert the hillshade index into a homemade index considering sun exposition rather than shade (Hillsun):
+The first step is to convert the hillshade index into a homemade index considering sun exposition rather than shade (hillsun):
+
+<p align="center">
+<img src="https://latex.codecogs.com/svg.image?hillsun&space;\_&space;9am&space;=&space;255&space;-&space;hillshade&space;\_&space;9am">
+
+<p align="center">
+<img src="https://latex.codecogs.com/svg.image?hillsun&space;\_&space;noon&space;=&space;255&space;-&space;hillshade&space;\_&space;noon">
+
+<p align="center">
+<img src="https://latex.codecogs.com/svg.image?hillsun&space;\_&space;3pm&space;=&space;255&space;-&space;hillshade&space;\_&space;3pm">
+  
+ With this new hillsun index, we calculate the coefficient of Sun_Illumination that each tree is receiving in respect to the total numbers of trees:
+  
+ <p align="center">
+<img src="https://latex.codecogs.com/svg.image?sun&space;\_&space;illumination&space;=&space;\frac{\frac{(hillsun\_9am\&space;&plus;\&space;hillsun\_noon\&space;&plus;\&space;hillsun\_3pm)_{per\&space;tree}}{3}}{\frac{\sum&space;hillsun\_9am\&space;&plus;\&space;\sum&space;hillsun\_noon\&space;&plus;\&space;\sum&space;hillsun\_3pm}{N}}"> 
+   
+Trees with a value higher than 1 are the ones receiving more sun than the average of all trees, and trees with a value lower than 1 are those that are receiving less.<br/> <br/> 
+With this new coefficient, we can now delete the five features gathering the same information: Slope, Aspect, Hillshade_9am, Hillshade_Noon and Hillshade_3pm. To summarize, the training set now has all the one-hot encoded features (Soil_Types and Wilderness_Areas) and five continuous variables: Elevation, Distance_To_Roadways, Distance_To_Fire_Points, plus the two new created (Hypotenuse_Distance_To_Hydrology and Sun_Illumination).<br/> <br/> 
+Before the feature engineering process, seven correlations were higher than 0.6 (in absolute value). Now, all of them are below this threshold. We can assume that the feature engineering process was a success in terms of removing informative redundancy within the features.<br/> <br/> 
+Once the new features were added and the outliers removed, it was now time to select which features to use for the training of our model. Two methods were combined in order to decide on the number of features to keep. The first one consists of using the feature importance ranking of a decision tree classifier, and the second one using SelectKBest() from scikit-learn. Regarding the feature importance from the classifier, the top variables cumulating 99% of importance were kept. This means 25 features were retained from the tree classifier. These retained features were then compared to the ones selected by SelectKBest() with 25 as an input for the number of top features to select. Comparing the two methods, out of 25 features retained, 21 were matching for both the tree classifier and SelectKBest(). These 21 features are the ones that will be kept for the training of the algorithm.
