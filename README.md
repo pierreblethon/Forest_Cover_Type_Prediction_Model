@@ -48,7 +48,18 @@ Finally, an analysis of the one-hot encoded features was done. The histogram cle
 
 ### Data Cleaning and Feature Engineering
 #### Removing unrelevant features and outliers
-Regarding data cleaning, we start by removing some irrelevant features as we found that there were two types of soils with only zeros (Soil_Type7 and Soil_Type15). Once we removed those features, we checked for outliers within each class defining the interquartile range per class. Our definition of and outlier for this project will be any value over two times the third quartile of the selected class, or below two times the first quartile of the selected class. With this definition, we can count the number of outliers per class. The percentage of outliers is around 6% of the data, so it was decided to remove them as there is enough data to train our algorithms. After removing outliers, the balance of the cleaned dataset was rechecked and still appeared to be well balanced.<br/>
+Regarding data cleaning, we start by removing some irrelevant features as we found that there were two types of soils with only zeros (Soil_Type7 and Soil_Type15). Once we removed those features, we checked for outliers within each class defining the interquartile range per class. Our definition of and outlier for this project will be any value over two times the third quartile of the selected class, or below two times the first quartile of the selected class. With this definition, we can count the number of outliers per class. The percentage of outliers is around 6% of the data, so it was decided to remove them as there is enough data to train our algorithms. Below is a visual representation of the effect of removing outliers on two of the variables: 
+
+<p align="center">
+<a href="https://user-images.githubusercontent.com/98318608/164008995-1a83904d-9cb5-48c5-b211-c5ae0c6be314.png">
+<img src="https://user-images.githubusercontent.com/98318608/164008995-1a83904d-9cb5-48c5-b211-c5ae0c6be314.png" width="600">
+</a>
+<p align = "center">
+Example of outliers removal
+</p>
+<br />
+
+After removing outliers, the balance of the cleaned dataset was rechecked and still appeared to be well balanced.<br/>
 
 #### Creating new features
 Now it was time for feature engineering. The first thing that was realized, as explained in the exploratory analysis, is that the two variables referring to hydrology (Vertical and Horizontal_Distance_To_Hydrology) were highly correlated. It was thought that if we adjust the hydrology point in one of the edges of a right triangle, we can infer the hypotenuse with the vertical and the horizontal distance, the hypotenuse being the “real” distance to water. This relation can be calculated as follows:
@@ -145,7 +156,7 @@ After splitting the training set into a sub-train set and test set, the final Ra
   
 <p align="center">
 <a href="https://user-images.githubusercontent.com/98318608/163984026-abbf2fd6-5abf-4604-b7d8-9ba1d0a5399d.png">
-<img src="https://user-images.githubusercontent.com/98318608/163984026-abbf2fd6-5abf-4604-b7d8-9ba1d0a5399d.png" width="1000">
+<img src="https://user-images.githubusercontent.com/98318608/163984026-abbf2fd6-5abf-4604-b7d8-9ba1d0a5399d.png" width="800">
 </a>
 <p align = "center">
 Confusion Matrix of the final Random Forest Model
