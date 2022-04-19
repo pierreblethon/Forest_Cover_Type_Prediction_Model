@@ -26,9 +26,9 @@
   
 <br/>
   
-   <h2 align="center">Unformal Report About The Process</h3>
+   <h2 align="center">Unformal Report About The Pipeline</h3>
 
-To see all the figures illustrating the following process, please open the Jupyter file "Predictive_Model.ipynb"
+To see all the figures illustrating the following process, please open the Jupyter file "Predictive_Model.ipynb"<br/>
 
 ### Dataset Exploratory Analysis
 The training set consists of raw unscaled data. Out of the 56 columns, one of them is an index (Id), ten of them are continuous variables and the rest consists of binary variables which have been one hot encoded. Checking the metadata, all features are integers counting no null values. Some binary variables only have one unique value (Soil_Type7 and Soil_Type15), meaning they are either constant to 0 or 1 and will therefore not help predicting the cover type. The training set is also perfectly balanced with one seventh of the total records corresponding to each cover type label. <br/><br/>
@@ -44,11 +44,13 @@ If most of the features are not highly correlated, some of them will require som
 
 Hillshade features and Distance features are the ones that are the most correlated with others or in between them.<br/><br/> 
 Another step of this exploratory analysis was to check for outliers in the training set. Every non-categorical variable has at least one class with outliers. If these outliers might still hold relevant information, the furthest ones should be removed as they will not help generalizing the information. They might consist of exceptional trees which will not help for the prediction. In total, 2,687 outliers were found which represents 17.7% of the dataset. Not all of them will be removed in the feature engineering step as it would generate an important loss of data to train the model.<br/><br/> 
-Finally, an analysis of the one-hot encoded features was done. The histogram clearly shows that some Soil_Type features are barely represented in the training set: #7 to #9, #15, #21, #25, #27, #28, #34, #36. These features might have to be removed from the model as they might not help for the prediction. The same exercise was done for the other one-hot encoded features: Wilderness_Areas. It showed how Wilderness_Area2 is underrepresented compared to the three others and might therefore not be considered when training the model.
-
+Finally, an analysis of the one-hot encoded features was done. The histogram clearly shows that some Soil_Type features are barely represented in the training set: #7 to #9, #15, #21, #25, #27, #28, #34, #36. These features might have to be removed from the model as they might not help for the prediction. The same exercise was done for the other one-hot encoded features: Wilderness_Areas. It showed how Wilderness_Area2 is underrepresented compared to the three others and might therefore not be considered when training the model.<br/>
 
 ### Data Cleaning and Feature Engineering
-Regarding data cleaning, we start by removing some irrelevant features as we found that there were two types of soils with only zeros (Soil_Type7 and Soil_Type15). Once we removed those features, we checked for outliers within each class defining the interquartile range per class. Our definition of and outlier for this project will be any value over two times the third quartile of the selected class, or below two times the first quartile of the selected class. With this definition, we can count the number of outliers per class. The percentage of outliers is around 6% of the data, so it was decided to remove them as there is enough data to train our algorithms. After removing outliers, the balance of the cleaned dataset was rechecked and still appeared to be well balanced.<br/><br/> 
+#### Removing unrelevant features and outliers
+Regarding data cleaning, we start by removing some irrelevant features as we found that there were two types of soils with only zeros (Soil_Type7 and Soil_Type15). Once we removed those features, we checked for outliers within each class defining the interquartile range per class. Our definition of and outlier for this project will be any value over two times the third quartile of the selected class, or below two times the first quartile of the selected class. With this definition, we can count the number of outliers per class. The percentage of outliers is around 6% of the data, so it was decided to remove them as there is enough data to train our algorithms. After removing outliers, the balance of the cleaned dataset was rechecked and still appeared to be well balanced.<br/>
+
+#### Creating new features
 Now it was time for feature engineering. The first thing that was realized, as explained in the exploratory analysis, is that the two variables referring to hydrology (Vertical and Horizontal_Distance_To_Hydrology) were highly correlated. It was thought that if we adjust the hydrology point in one of the edges of a right triangle, we can infer the hypotenuse with the vertical and the horizontal distance, the hypotenuse being the “real” distance to water. This relation can be calculated as follows:
 
 <p align="center">
@@ -90,9 +92,11 @@ The first step is to convert the hillshade index into a homemade index consideri
    
 Trees with a value higher than 1 are the ones receiving more sun than the average of all trees, and trees with a value lower than 1 are those that are receiving less.<br/> <br/> 
 With this new coefficient, we can now delete the five features gathering the same information: Slope, Aspect, Hillshade_9am, Hillshade_Noon and Hillshade_3pm. To summarize, the training set now has all the one-hot encoded features (Soil_Types and Wilderness_Areas) and five continuous variables: Elevation, Distance_To_Roadways, Distance_To_Fire_Points, plus the two new created (Hypotenuse_Distance_To_Hydrology and Sun_Illumination).<br/> <br/> 
-Before the feature engineering process, seven correlations were higher than 0.6 (in absolute value). Now, all of them are below this threshold. We can assume that the feature engineering process was a success in terms of removing informative redundancy within the features.<br/> <br/> 
+Before the feature engineering process, seven correlations were higher than 0.6 (in absolute value). Now, all of them are below this threshold. We can assume that the feature engineering process was a success in terms of removing informative redundancy within the features.<br/>
+   
+#### Selecting the most relevant features to train the model
 Once the new features were added and the outliers removed, it was now time to select which features to use for the training of our model. Two methods were combined in order to decide on the number of features to keep. The first one consists of using the feature importance ranking of a decision tree classifier, and the second one using SelectKBest() from scikit-learn. Regarding the feature importance from the classifier, the top variables cumulating 99% of importance were kept. This means 25 features were retained from the tree classifier. These retained features were then compared to the ones selected by SelectKBest() with 25 as an input for the number of top features to select. Comparing the two methods, out of 25 features retained, 21 were matching for both the tree classifier and SelectKBest(). These 21 features are the ones that will be kept for the training of the algorithm. <br/> <br/> 
-Finally, regarding scaling, four methods were tested on a baseline logistic regression model: StandardScaler(), Normalizer(), RobustScaler() and MinMaxScaler(). Apart from the Normalizer(), all other methods showed good potential with accuracies above 71%. In the following part about modelling, these three top performing scaling methods will be applied to each algorithm. PCA was also applied after standardizing the data, but it did not seem to increase the baseline model’s performance. Our guess is that since the correlation between the features is weak, PCA can hardly find good linear combination of the predictors to build its principal components.
+Finally, regarding scaling, four methods were tested on a baseline logistic regression model: StandardScaler(), Normalizer(), RobustScaler() and MinMaxScaler(). Apart from the Normalizer(), all other methods showed good potential with accuracies above 71%. In the following part about modelling, these three top performing scaling methods will be applied to each algorithm. PCA was also applied after standardizing the data, but it did not seem to increase the baseline model’s performance. Our guess is that since the correlation between the features is weak, PCA can hardly find good linear combination of the predictors to build its principal components.<br/>
 
 
 ### Modeling 
@@ -134,8 +138,7 @@ In views of the results, the final model that will be used for our prediction is
 * Max_depth: 50
 * Max_features: 0.6
 * Min_sample_split: 2
-* Min_sample_leaf: 1
-
+* Min_sample_leaf: 1<br/>
 
 ### Final Model 
 After splitting the training set into a sub-train set and test set, the final Random Forest model was trained and evaluated. Below are the confusion matrixes (in number of counts and percentage) after predicting Cover_Type on the sub-test set:
@@ -149,7 +152,7 @@ Confusion Matrix of the final Random Forest Model
 </p>
 <br />
   
-It seems like Cover_Type 1,2 and 3 are the ones the model struggles the most with. The final accuracy of the model is 85.3%, recall is 85.0% and precision 84.7% which are overall good scores. The majority of records appear to be Cover_Type 1 and 2, the ones we know our model struggles the most with. Taking this into account, this might decrease the overall performance metrics of the model on the unlabeled test set. Therefore, we should expect to get lower values than the ones stated above regarding accuracy, recall and precision. However, by cross validating our model, limiting as much as possible overfitting and all the work that has been done throughout this machine learning pipeline, we should still expect good results.
+It seems like Cover_Type 1,2 and 3 are the ones the model struggles the most with. The final accuracy of the model is 85.3%, recall is 85.0% and precision 84.7% which are overall good scores. The majority of records appear to be Cover_Type 1 and 2, the ones we know our model struggles the most with. Taking this into account, this might decrease the overall performance metrics of the model on the unlabeled test set. Therefore, we should expect to get lower values than the ones stated above regarding accuracy, recall and precision. However, by cross validating our model, limiting as much as possible overfitting and all the work that has been done throughout this machine learning pipeline, we should still expect good results.<br/>
 
 
 ### References
