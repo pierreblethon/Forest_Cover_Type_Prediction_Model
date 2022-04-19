@@ -10,9 +10,10 @@
 
 * This project presents an attempt to predict the kind of tree cover from four wilderness areas located in the Roosevelt National Forest of northern Colorado.
 * This project started with the motivation to create my own machine learning pipeline and get a sense of what Kaggle Competitions consist of (this Kaggle Competition : https://www.kaggle.com/c/forest-cover-type-prediction/overview).
-* The dataset consists of two files (you can find both of them in the "Train_&_Test_sets.zip" folder):
+* The dataset consists of two files (you can find both of them in the following folder : "Train_&_Test_sets.zip"):
    * A labeled training set with 15 120 records
    * An unlabeled test set with 565 892 records
+* The final prediction of the unlabeled test set using my best model can be found in the following file : "My_Prediction.csv"
   
 ### Main Results & Findings
   
